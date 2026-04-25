@@ -38,6 +38,14 @@
 
 所以 `@Configuration` 经常和 `@Bean` 一起出现。
 
+对应源码：
+
+- `@Configuration` 注解定义：`src/main/java/com/zimu/spring/annotation/Configuration.java`
+- `@Bean` 注解定义：`src/main/java/com/zimu/spring/annotation/Bean.java`
+- `@Service` 注解定义：`src/main/java/com/zimu/spring/annotation/Service.java`
+- 配置类示例：`src/main/java/com/zimu/demo/config/AppConfig.java`
+- 业务类示例：`src/main/java/com/zimu/demo/service/UserService.java`
+
 ### 最简单记忆法
 
 - `@Service`：这个类自己上班
@@ -80,6 +88,13 @@ flowchart TD
 
 不管你是“类自己注册”，还是“配置类帮你注册”，最后都会变成容器里的 Bean。
 
+对应源码：
+
+- 容器识别哪些类算组件：`src/main/java/com/zimu/spring/context/ApplicationContext.java`
+- `@Configuration` 配置类：`src/main/java/com/zimu/demo/config/AppConfig.java`
+- `@Service` 业务类：`src/main/java/com/zimu/demo/service/UserService.java`
+- `@Bean` 产生的普通对象：`src/main/java/com/zimu/demo/bean/SystemReporter.java`
+
 ---
 
 ## 3. 你这个项目里的真实关系
@@ -108,6 +123,12 @@ flowchart LR
 `@Service` 走的是“类直接注册”路线。
 
 `@Bean` 走的是“方法返回对象注册”路线。
+
+对应源码：
+
+- `AppConfig` 里定义了 `@Bean` 方法：`src/main/java/com/zimu/demo/config/AppConfig.java`
+- `UserService` 自己标了 `@Service`：`src/main/java/com/zimu/demo/service/UserService.java`
+- `SystemReporter` 是被 `@Bean` 注册进去的普通类：`src/main/java/com/zimu/demo/bean/SystemReporter.java`
 
 ---
 
@@ -142,11 +163,22 @@ flowchart TD
 
 “我要去哪个包下面找候选人。”
 
+对应源码：
+
+- 启动入口：`src/main/java/com/zimu/Main.java`
+- 配置类上的 `@ComponentScan`：`src/main/java/com/zimu/demo/config/AppConfig.java`
+- 容器解析扫描包：`src/main/java/com/zimu/spring/context/ApplicationContext.java`
+
 #### 第二步：把候选人名单找出来
 
 容器会扫描这个包下的所有类。
 
 也就是先把所有可能用得上的 class 全部找出来。
+
+对应源码：
+
+- 包扫描工具：`src/main/java/com/zimu/spring/util/ClassScanner.java`
+- 容器发起扫描：`src/main/java/com/zimu/spring/context/ApplicationContext.java`
 
 #### 第三步：挑出真正要管理的人
 
@@ -159,6 +191,14 @@ flowchart TD
 - `@Repository`
 - `@Configuration`
 
+对应源码：
+
+- 容器判断组件类型：`src/main/java/com/zimu/spring/context/ApplicationContext.java`
+- 控制层示例：`src/main/java/com/zimu/demo/controller/UserController.java`
+- 业务层示例：`src/main/java/com/zimu/demo/service/UserService.java`
+- 持久层示例：`src/main/java/com/zimu/demo/repository/UserRepository.java`
+- 配置类示例：`src/main/java/com/zimu/demo/config/AppConfig.java`
+
 #### 第四步：开始创建对象
 
 容器开始 `new` 这些类。
@@ -169,6 +209,11 @@ flowchart TD
 
 这一步其实就是依赖注入。
 
+对应源码：
+
+- 容器创建 Bean：`src/main/java/com/zimu/spring/context/ApplicationContext.java`
+- `UserService` 构造器注入 `UserRepository`：`src/main/java/com/zimu/demo/service/UserService.java`
+
 #### 第五步：处理 `@Autowired`
 
 对象创建出来后，如果字段上写了 `@Autowired`，容器就会继续找对应类型的 Bean 塞进去。
@@ -176,6 +221,11 @@ flowchart TD
 比如：
 
 `UserController` 里需要 `UserService`，那容器就把 `UserService` 放进去。
+
+对应源码：
+
+- `@Autowired` 字段注入逻辑：`src/main/java/com/zimu/spring/context/ApplicationContext.java`
+- `UserController` 中的 `@Autowired` 字段：`src/main/java/com/zimu/demo/controller/UserController.java`
 
 #### 第六步：处理 `@Value`
 
@@ -190,6 +240,12 @@ flowchart TD
 - 应用名
 - 版本号
 
+对应源码：
+
+- `@Value` 注入逻辑：`src/main/java/com/zimu/spring/context/ApplicationContext.java`
+- `UserController` 里的端口示例：`src/main/java/com/zimu/demo/controller/UserController.java`
+- `UserRepository` 里的数据库名示例：`src/main/java/com/zimu/demo/repository/UserRepository.java`
+
 #### 第七步：注册进容器
 
 等这个对象依赖也齐了，配置值也填好了，它才算真正准备完毕。
@@ -197,6 +253,10 @@ flowchart TD
 然后容器把它放进自己的大仓库里保存起来。
 
 以后谁要用，直接拿。
+
+对应源码：
+
+- Bean 注册和获取：`src/main/java/com/zimu/spring/context/ApplicationContext.java`
 
 #### 第八步：处理 `@Configuration + @Bean`
 
@@ -208,11 +268,22 @@ flowchart TD
 
 这些方法返回出来的普通对象，也会被放进容器。
 
+对应源码：
+
+- 容器处理 `@Bean` 方法：`src/main/java/com/zimu/spring/context/ApplicationContext.java`
+- 配置类里的 `@Bean`：`src/main/java/com/zimu/demo/config/AppConfig.java`
+- 被注册的普通类：`src/main/java/com/zimu/demo/bean/SystemReporter.java`
+
 #### 第九步：真正开始使用
 
 最后，业务代码通过 `getBean()` 从容器里拿对象。
 
 一拿出来，通常已经是一个“依赖都装好了、配置也填好了”的完整对象。
+
+对应源码：
+
+- 启动后 `getBean()` 使用对象：`src/main/java/com/zimu/Main.java`
+- 容器里的 `getBean()` 方法：`src/main/java/com/zimu/spring/context/ApplicationContext.java`
 
 ---
 
@@ -229,6 +300,14 @@ Spring 容器启动，本质上就是做这几件事：
 所以你以后再看到 Spring，脑子里可以先只记一句话：
 
 “Spring 就是在帮我们统一创建对象、组装对象、管理对象。”
+
+建议对照阅读顺序：
+
+1. 先看 `src/main/java/com/zimu/Main.java`
+2. 再看 `src/main/java/com/zimu/demo/config/AppConfig.java`
+3. 再看 `src/main/java/com/zimu/spring/context/ApplicationContext.java`
+4. 然后看 `src/main/java/com/zimu/spring/util/ClassScanner.java`
+5. 最后回头看 `controller`、`service`、`repository` 三层业务类
 
 ---
 

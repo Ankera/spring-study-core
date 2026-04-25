@@ -14,4 +14,27 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <!-- H2 是一个轻量级内存数据库。 -->
+        <!-- 我们这里用它来演示 JDBC 和 mini MyBatis，避免你本地必须提前装 MySQL。 -->
+        <!-- 它不是 MyBatis 相关库，只是拿来当数据库。 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.2.224</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>  <!-- 或 5.9.x 如果你用 JUnit 5 -->
+            <scope>test</scope>          <!-- 建议改为 test 作用域 -->
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.9.2</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
 </project>

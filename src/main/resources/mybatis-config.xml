@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <environment>
+        <property name="driver" value="org.h2.Driver"/>
+        <property name="url" value="jdbc:h2:mem:mini_mybatis;DB_CLOSE_DELAY=-1;MODE=MySQL"/>
+        <property name="username" value="sa"/>
+        <property name="password" value=""/>
+    </environment>
+
+    <mappers>
+        <mapper resource="com/zimu/demo/mybatis/mapper/UserMapper.xml"/>
+    </mappers>
+</configuration>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mapper namespace="com.zimu.demo.mybatis.mapper.UserMapper">
+    <select id="selectById" parameterType="java.lang.Long" resultType="com.zimu.demo.mybatis.entity.User">
+        select id, username, age
+        from t_user
+        where id = #{id}
+    </select>
+
+    <select id="selectByUsername" parameterType="java.lang.String" resultType="com.zimu.demo.mybatis.entity.User">
+        select id, username, age
+        from t_user
+        where username = #{username}
+    </select>
+</mapper>

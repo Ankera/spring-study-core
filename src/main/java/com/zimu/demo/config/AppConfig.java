@@ -26,6 +26,7 @@ public class AppConfig {
             // 这里继续注入配置文件里的版本号。
             @Value("${app.version}") String appVersion
     ) {
+        System.out.println("== systemReporter ==");
         // 返回一个普通对象，容器会把它注册成 Bean。
         return new SystemReporter(appName, appVersion);
     }
