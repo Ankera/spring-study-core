@@ -5,6 +5,9 @@
         <property name="url" value="jdbc:h2:mem:mini_mybatis;DB_CLOSE_DELAY=-1;MODE=MySQL"/>
         <property name="username" value="sa"/>
         <property name="password" value=""/>
+        <property name="poolEnabled" value="true"/>
+        <property name="poolMaximumActiveConnections" value="3"/>
+        <property name="poolMaximumIdleConnections" value="2"/>
     </environment>
 
     <mappers>

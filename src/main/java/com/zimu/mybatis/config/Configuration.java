@@ -1,5 +1,7 @@
 package com.zimu.mybatis.config;
 
+// 导入 mini MyBatis 的数据源接口。
+import com.zimu.mybatis.datasource.MiniDataSource;
 // 导入映射语句类。
 import com.zimu.mybatis.mapping.MappedStatement;
 
@@ -22,6 +24,18 @@ public class Configuration {
 
     // 保存数据库密码。
     private String password;
+
+    // 是否启用连接池。
+    private boolean poolEnabled = true;
+
+    // 连接池最大活跃连接数。
+    private int poolMaximumActiveConnections = 5;
+
+    // 连接池最大空闲连接数。
+    private int poolMaximumIdleConnections = 2;
+
+    // 保存最终创建好的数据源。
+    private MiniDataSource dataSource;
 
     // 这个 Map 用来保存所有解析出来的 SQL 语句。
     // key 一般长这样：com.zimu.demo.mybatis.mapper.UserMapper.selectById
@@ -65,6 +79,46 @@ public class Configuration {
     // 设置密码。
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    // 返回是否启用连接池。
+    public boolean isPoolEnabled() {
+        return poolEnabled;
+    }
+
+    // 设置是否启用连接池。
+    public void setPoolEnabled(boolean poolEnabled) {
+        this.poolEnabled = poolEnabled;
+    }
+
+    // 返回最大活跃连接数。
+    public int getPoolMaximumActiveConnections() {
+        return poolMaximumActiveConnections;
+    }
+
+    // 设置最大活跃连接数。
+    public void setPoolMaximumActiveConnections(int poolMaximumActiveConnections) {
+        this.poolMaximumActiveConnections = poolMaximumActiveConnections;
+    }
+
+    // 返回最大空闲连接数。
+    public int getPoolMaximumIdleConnections() {
+        return poolMaximumIdleConnections;
+    }
+
+    // 设置最大空闲连接数。
+    public void setPoolMaximumIdleConnections(int poolMaximumIdleConnections) {
+        this.poolMaximumIdleConnections = poolMaximumIdleConnections;
+    }
+
+    // 返回数据源。
+    public MiniDataSource getDataSource() {
+        return dataSource;
+    }
+
+    // 设置数据源。
+    public void setDataSource(MiniDataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     // 注册一条映射语句。

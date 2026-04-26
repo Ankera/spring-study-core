@@ -401,3 +401,141 @@ Example.Criteria criteria = example.createCriteria();
 - `Example / Criteria` 条件拼装思路
 
 后面继续扩展，会非常适合用来真正吃透这些框架的底层思路。
+
+---
+
+## 12. 这次继续补了什么：mini MyBatis 连接池
+
+这次在 mini MyBatis 里补了一条新的学习主线：
+
+“MyBatis 怎么通过数据源和连接池管理数据库连接。”
+
+之前的版本是：
+
+```text
+每执行一次 SQL -> DriverManager.getConnection() 新建连接 -> SQL 执行完真的 close
+```
+
+现在改成：
+
+```text
+每执行一次 SQL -> 从 DataSource 获取连接 -> SQL 执行完 close -> 如果是池化连接，就归还给连接池
+```
+
+### 12.1 新增的核心类
+
+新增了这些文件：
+
+- `src/main/java/com/zimu/mybatis/datasource/MiniDataSource.java`
+- `src/main/java/com/zimu/mybatis/datasource/UnpooledDataSource.java`
+- `src/main/java/com/zimu/mybatis/datasource/PooledDataSource.java`
+- `src/main/java/com/zimu/mybatis/datasource/PooledConnection.java`
+- `src/main/java/com/zimu/demo/mybatis/support/ConnectionPoolDemo.java`
+
+### 12.2 每个类的作用
+
+`MiniDataSource`：
+
+mini MyBatis 自己定义的极简数据源接口，只负责一件事：
+
+```java
+Connection getConnection();
+```
+
+`UnpooledDataSource`：
+
+非池化数据源，每次都通过 `DriverManager` 新建真实物理连接。
+
+`PooledDataSource`：
+
+池化数据源，内部维护两个列表：
+
+- `idleConnections`：空闲连接
+- `activeConnections`：正在使用的连接
+
+借连接时：
+
+1. 先看有没有空闲连接
+2. 没有空闲连接，再判断是否还能创建新连接
+3. 达到最大活跃连接数，就报错
+
+还连接时：
+
+1. 从活跃列表移除
+2. 如果空闲列表没满，就放入空闲列表
+3. 如果空闲列表满了，就真的关闭物理连接
+
+`PooledConnection`：
+
+用 JDK 动态代理包装真实 `Connection`。
+
+它最关键的逻辑是拦截 `close()`：
+
+```text
+普通 JDBC close = 真的关闭物理连接
+连接池 close = 把连接归还给池子
+```
+
+### 12.3 配置文件新增了什么
+
+`src/main/resources/mybatis-config.xml` 里新增：
+
+```xml
+<property name="poolEnabled" value="true"/>
+<property name="poolMaximumActiveConnections" value="3"/>
+<property name="poolMaximumIdleConnections" value="2"/>
+```
+
+### 12.4 原来的 SQL 执行代码怎么变了
+
+原来 `SimpleExecutor` 是直接创建连接：
+
+```java
+ConnectionFactory.createConnection(configuration)
+```
+
+现在改成从数据源拿连接：
+
+```java
+ConnectionFactory.getConnection(configuration)
+```
+
+这样 `SimpleExecutor` 不需要关心背后是：
+
+- 每次新建连接
+- 还是从连接池复用连接
+
+这更接近真正 MyBatis 的结构。
+
+### 12.5 怎么观察连接池效果
+
+可以运行：
+
+```bash
+mvn exec:java -Dexec.mainClass=com.zimu.demo.mybatis.support.ConnectionPoolDemo
+```
+
+会看到类似输出：
+
+```text
+借出第 1 个连接 -> active=1, idle=0
+借出第 2 个连接 -> active=2, idle=0
+归还第 1 个连接 -> active=1, idle=1
+再次借出连接 -> active=2, idle=0
+全部归还连接 -> active=0, idle=2
+```
+
+这说明连接没有被每次真正关闭，而是在空闲池里等待复用。
+
+### 12.6 和 MySQL 的关系
+
+当前项目默认还是使用 H2 内存数据库的 MySQL 模式，方便不用安装 MySQL 也能跑。
+
+但连接池逻辑和具体数据库无关。
+
+以后如果要真的连接 MySQL，只需要：
+
+1. `pom.xml` 加 MySQL JDBC 驱动
+2. `mybatis-config.xml` 改成 MySQL 的 driver、url、username、password
+
+连接池这套核心逻辑仍然可以继续复用。

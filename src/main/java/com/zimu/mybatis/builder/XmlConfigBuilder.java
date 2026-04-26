@@ -2,6 +2,10 @@ package com.zimu.mybatis.builder;
 
 // 导入配置对象。
 import com.zimu.mybatis.config.Configuration;
+// 导入池化数据源。
+import com.zimu.mybatis.datasource.PooledDataSource;
+// 导入非池化数据源。
+import com.zimu.mybatis.datasource.UnpooledDataSource;
 // 导入资源读取工具。
 import com.zimu.mybatis.util.Resources;
 
@@ -35,6 +39,9 @@ public class XmlConfigBuilder {
 
             // 先解析数据库连接信息。
             parseEnvironment(rootElement, configuration);
+
+            // 根据配置创建数据源。
+            buildDataSource(configuration);
 
             // 再解析 mapper XML 列表。
             parseMappers(rootElement, configuration);
@@ -72,9 +79,36 @@ public class XmlConfigBuilder {
                 case "url" -> configuration.setUrl(value);
                 case "username" -> configuration.setUsername(value);
                 case "password" -> configuration.setPassword(value);
+                case "poolEnabled" -> configuration.setPoolEnabled(Boolean.parseBoolean(value));
+                case "poolMaximumActiveConnections" -> configuration.setPoolMaximumActiveConnections(Integer.parseInt(value));
+                case "poolMaximumIdleConnections" -> configuration.setPoolMaximumIdleConnections(Integer.parseInt(value));
                 default -> throw new IllegalArgumentException("不认识的数据库配置项: " + name);
             }
         }
+    }
+
+    // 根据配置创建数据源。
+    private void buildDataSource(Configuration configuration) {
+        // 非池化数据源负责真的创建物理连接。
+        UnpooledDataSource unpooledDataSource = new UnpooledDataSource(
+                configuration.getDriver(),
+                configuration.getUrl(),
+                configuration.getUsername(),
+                configuration.getPassword()
+        );
+
+        // 如果启用连接池，就用池化数据源包装一层。
+        if (configuration.isPoolEnabled()) {
+            configuration.setDataSource(new PooledDataSource(
+                    unpooledDataSource,
+                    configuration.getPoolMaximumActiveConnections(),
+                    configuration.getPoolMaximumIdleConnections()
+            ));
+            return;
+        }
+
+        // 否则每次都新建连接。
+        configuration.setDataSource(unpooledDataSource);
     }
 
     // 解析所有 mapper 配置。

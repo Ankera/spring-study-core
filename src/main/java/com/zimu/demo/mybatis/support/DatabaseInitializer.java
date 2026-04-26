@@ -17,7 +17,7 @@ public class DatabaseInitializer {
     public static void initialize(Configuration configuration) {
         // 创建连接并执行建表、插数语句。
         try (
-                Connection connection = ConnectionFactory.createConnection(configuration);
+                Connection connection = ConnectionFactory.getConnection(configuration);
                 Statement statement = connection.createStatement()
         ) {
             // 每次运行前先把表删掉，保证示例结果稳定。

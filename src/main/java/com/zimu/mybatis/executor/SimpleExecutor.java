@@ -33,9 +33,9 @@ public class SimpleExecutor {
         // 获取结果类型。
         Class<T> resultType = getResultType(mappedStatement.getResultType());
 
-        // 创建数据库连接并执行查询。
+        // 从数据源获取连接并执行查询。
         try (
-                Connection connection = ConnectionFactory.createConnection(configuration);
+                Connection connection = ConnectionFactory.getConnection(configuration);
                 PreparedStatement preparedStatement = connection.prepareStatement(boundSql.getJdbcSql())
         ) {
             // 先把方法参数绑定到 PreparedStatement 中。
@@ -62,9 +62,9 @@ public class SimpleExecutor {
         // 先把 #{...} 解析成 JDBC 可执行的 SQL。
         BoundSql boundSql = buildBoundSql(mappedStatement.getSql());
 
-        // 创建数据库连接并执行更新。
+        // 从数据源获取连接并执行更新。
         try (
-                Connection connection = ConnectionFactory.createConnection(configuration);
+                Connection connection = ConnectionFactory.getConnection(configuration);
                 PreparedStatement preparedStatement = connection.prepareStatement(boundSql.getJdbcSql())
         ) {
             // 先绑定参数。

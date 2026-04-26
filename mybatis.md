@@ -169,6 +169,87 @@ User user = userMapper.selectById(1L);
 - 执行查询
 - 取结果
 
+现在它获取连接的方式已经改成：
+
+```java
+ConnectionFactory.getConnection(configuration)
+```
+
+也就是说，执行器不再关心“连接是新建的，还是从连接池里借来的”。
+
+这和真正 MyBatis 的设计方向是一样的：
+
+- Executor 负责执行 SQL
+- DataSource 负责提供连接
+- 是否池化，是 DataSource 背后的事情
+
+### 4.6.1 mini 连接池做了什么
+
+这次新增了几个核心类：
+
+- `MiniDataSource`：mini MyBatis 自己定义的极简数据源接口
+- `UnpooledDataSource`：每次都通过 `DriverManager` 新建物理连接
+- `PooledDataSource`：缓存连接，负责借出和归还
+- `PooledConnection`：用 JDK 动态代理包装真实连接，拦截 `close()`
+
+最重要的一句话：
+
+连接池不是让你不关连接。
+
+连接池是把 `connection.close()` 的含义改掉：
+
+普通 JDBC：
+
+```text
+close() = 真的关闭物理连接
+```
+
+连接池：
+
+```text
+close() = 把连接归还给池子，下次继续复用
+```
+
+所以 `SimpleExecutor` 里的代码仍然可以放心使用 `try-with-resources`：
+
+```java
+try (Connection connection = ConnectionFactory.getConnection(configuration)) {
+    // 执行 SQL
+}
+```
+
+只是当启用连接池时，这里的 `close()` 会被 `PooledConnection` 拦截。
+
+### 4.6.2 和 MySQL 是什么关系
+
+连接池和具体数据库不是一回事。
+
+你连 H2、MySQL、PostgreSQL，本质流程都一样：
+
+```text
+JDBC driver + url + username + password -> 创建物理连接
+```
+
+区别只是配置不同。
+
+当前项目为了方便运行，默认还是用 H2 的 MySQL 模式：
+
+```xml
+<property name="driver" value="org.h2.Driver"/>
+<property name="url" value="jdbc:h2:mem:mini_mybatis;DB_CLOSE_DELAY=-1;MODE=MySQL"/>
+```
+
+如果以后你要真的连 MySQL，大体会变成：
+
+```xml
+<property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+<property name="url" value="jdbc:mysql://localhost:3306/test?useSSL=false&amp;serverTimezone=Asia/Shanghai"/>
+<property name="username" value="root"/>
+<property name="password" value="你的密码"/>
+```
+
+同时 `pom.xml` 里需要加 MySQL JDBC 驱动。
+
 ### 4.7 `ResultSetMapper`
 
 这个类负责：
