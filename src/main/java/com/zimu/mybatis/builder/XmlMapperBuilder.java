@@ -4,6 +4,8 @@ package com.zimu.mybatis.builder;
 import com.zimu.mybatis.config.Configuration;
 // 导入映射语句对象。
 import com.zimu.mybatis.mapping.MappedStatement;
+// 导入 SQL 类型枚举。
+import com.zimu.mybatis.mapping.SqlCommandType;
 // 导入资源读取工具。
 import com.zimu.mybatis.util.Resources;
 
@@ -35,38 +37,56 @@ public class XmlMapperBuilder {
             // 读取 namespace，它必须和 mapper 接口全限定名一致。
             String namespace = mapperElement.getAttribute("namespace");
 
-            // 当前示例里只演示 select，所以只解析 select 节点。
-            NodeList selectNodes = mapperElement.getElementsByTagName("select");
+            // 解析所有 select 节点。
+            parseStatementNodes(mapperElement, namespace, "select", SqlCommandType.SELECT, configuration);
 
-            // 遍历所有 select 节点。
-            for (int index = 0; index < selectNodes.getLength(); index++) {
-                // 取出当前 select 元素。
-                Element selectElement = (Element) selectNodes.item(index);
-
-                // 创建一个映射语句对象。
-                MappedStatement mappedStatement = new MappedStatement();
-
-                // 设置 namespace。
-                mappedStatement.setNamespace(namespace);
-
-                // 设置 id。
-                mappedStatement.setId(selectElement.getAttribute("id"));
-
-                // 设置参数类型。
-                mappedStatement.setParameterType(selectElement.getAttribute("parameterType"));
-
-                // 设置结果类型。
-                mappedStatement.setResultType(selectElement.getAttribute("resultType"));
-
-                // 读取 SQL 文本，并清理多余空白。
-                mappedStatement.setSql(cleanSql(selectElement.getTextContent()));
-
-                // 用 namespace + id 作为唯一 key 注册到配置对象中。
-                configuration.addMappedStatement(mappedStatement.getStatementId(), mappedStatement);
-            }
+            // 解析所有 insert 节点。
+            parseStatementNodes(mapperElement, namespace, "insert", SqlCommandType.INSERT, configuration);
         } catch (Exception exception) {
             // 解析失败就直接抛异常。
             throw new RuntimeException("解析 mapper XML 失败: " + mapperResource, exception);
+        }
+    }
+
+    // 统一解析某一类语句节点。
+    private void parseStatementNodes(
+            Element mapperElement,
+            String namespace,
+            String tagName,
+            SqlCommandType sqlCommandType,
+            Configuration configuration
+    ) {
+        // 先拿到这种标签的所有节点。
+        NodeList statementNodes = mapperElement.getElementsByTagName(tagName);
+
+        // 逐个节点解析。
+        for (int index = 0; index < statementNodes.getLength(); index++) {
+            // 取出当前语句元素。
+            Element statementElement = (Element) statementNodes.item(index);
+
+            // 创建映射语句对象。
+            MappedStatement mappedStatement = new MappedStatement();
+
+            // 设置 namespace。
+            mappedStatement.setNamespace(namespace);
+
+            // 设置方法 id。
+            mappedStatement.setId(statementElement.getAttribute("id"));
+
+            // 设置参数类型。
+            mappedStatement.setParameterType(statementElement.getAttribute("parameterType"));
+
+            // 设置结果类型。
+            mappedStatement.setResultType(statementElement.getAttribute("resultType"));
+
+            // 设置 SQL 类型。
+            mappedStatement.setSqlCommandType(sqlCommandType);
+
+            // 设置 SQL 文本。
+            mappedStatement.setSql(cleanSql(statementElement.getTextContent()));
+
+            // 注册到配置对象。
+            configuration.addMappedStatement(mappedStatement.getStatementId(), mappedStatement);
         }
     }
 

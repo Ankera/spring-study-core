@@ -26,17 +26,18 @@ public class DatabaseInitializer {
             // 重新创建用户表。
             statement.execute("""
                     create table t_user (
-                        id bigint primary key,
+                        id bigint auto_increment primary key,
                         username varchar(64),
+                        password varchar(64),
                         age int
                     )
                     """);
 
             // 插入第一条测试数据。
-            statement.execute("insert into t_user(id, username, age) values (1, 'zhangsan', 18)");
+            statement.execute("insert into t_user(username, password, age) values ('zhangsan', '123456', 18)");
 
             // 插入第二条测试数据。
-            statement.execute("insert into t_user(id, username, age) values (2, 'lisi', 20)");
+            statement.execute("insert into t_user(username, password, age) values ('lisi', 'abcdef', 20)");
         } catch (Exception exception) {
             // 如果初始化失败，就抛异常。
             throw new RuntimeException("初始化测试数据库失败", exception);

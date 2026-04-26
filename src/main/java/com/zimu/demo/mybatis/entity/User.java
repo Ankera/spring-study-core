@@ -9,6 +9,9 @@ public class User {
     // 对应数据库里的 username 列。
     private String username;
 
+    // 对应数据库里的 password 列。
+    private String password;
+
     // 对应数据库里的 age 列。
     private Integer age;
 
@@ -36,6 +39,16 @@ public class User {
         this.username = username;
     }
 
+    // 返回密码。
+    public String getPassword() {
+        return password;
+    }
+
+    // 设置密码。
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     // 返回年龄。
     public Integer getAge() {
         return age;
@@ -49,6 +62,6 @@ public class User {
     // 重写 toString，方便打印结果。
     @Override
     public String toString() {
-        return "User{id=" + id + ", username='" + username + "', age=" + age + "}";
+        return "User{id=" + id + ", username='" + username + "', password='" + password + "', age=" + age + "}";
     }
 }

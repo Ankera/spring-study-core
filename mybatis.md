@@ -555,6 +555,114 @@ preparedStatement.setObject(1, 参数值);
 
 ---
 
+## 10.4 `#{username}`、`#{password}` 这种到底是怎么解析的
+
+你现在看到这种 XML：
+
+```xml
+<insert id="insertUser" parameterType="com.zimu.demo.mybatis.entity.User">
+    insert into t_user(username, password, age)
+    values (#{username}, #{password}, #{age})
+</insert>
+```
+
+最容易迷糊的点通常有两个：
+
+1. `#{username}` 为什么最后会变成 `?`
+2. `username` 这个值到底是从哪里拿出来的
+
+### 第一步：先把 `#{...}` 变成 JDBC 的 `?`
+
+在我们这个 mini MyBatis 里，这一步是 `GenericTokenParser.parse(...)` 做的。
+
+比如原始 SQL 是：
+
+```sql
+insert into t_user(username, password, age)
+values (#{username}, #{password}, #{age})
+```
+
+解析后会变成：
+
+```sql
+insert into t_user(username, password, age)
+values (?, ?, ?)
+```
+
+同时它还会记住参数顺序：
+
+```text
+[username, password, age]
+```
+
+也就是说，框架不是只改 SQL。
+
+它还会顺手记住：
+
+第 1 个问号对应 `username`
+
+第 2 个问号对应 `password`
+
+第 3 个问号对应 `age`
+
+### 第二步：再去参数对象里按名字取值
+
+假设你传进去的是这个对象：
+
+```java
+User user = new User();
+user.setUsername("wangwu");
+user.setPassword("pw123");
+user.setAge(22);
+```
+
+那框架就会按刚才记住的顺序去取值：
+
+1. 看到 `username`，就去 `user` 对象里找 `username` 字段
+2. 看到 `password`，就去 `user` 对象里找 `password` 字段
+3. 看到 `age`，就去 `user` 对象里找 `age` 字段
+
+最后拿到的是：
+
+```text
+username -> wangwu
+password -> pw123
+age -> 22
+```
+
+### 第三步：把这些值按顺序塞进 `PreparedStatement`
+
+最后底层会做的事，本质上就是：
+
+```java
+preparedStatement.setObject(1, "wangwu");
+preparedStatement.setObject(2, "pw123");
+preparedStatement.setObject(3, 22);
+```
+
+所以你可以把 `#{username}` 理解成一句人话：
+
+“等下请从参数对象里把 `username` 这个字段取出来，然后安全地绑定到 SQL 里。”
+
+### 你可以怎么记
+
+`#{字段名}` 不是直接把字符串拼到 SQL 里。
+
+它做的是两件事：
+
+1. 记住字段名
+2. 最后把字段值安全地绑定到 `?` 上
+
+### 本项目对应代码
+
+- `#{...}` 解析成 `?`：`src/main/java/com/zimu/mybatis/util/GenericTokenParser.java`
+- 按字段名从对象中取值：`src/main/java/com/zimu/mybatis/reflection/ParameterResolver.java`
+- 最终绑定到 `PreparedStatement`：`src/main/java/com/zimu/mybatis/executor/SimpleExecutor.java`
+- 演示类：`src/main/java/com/zimu/demo/mybatis/support/PlaceholderBindingDemo.java`
+- 真实 insert XML：`src/main/resources/com/zimu/demo/mybatis/mapper/UserMapper.xml`
+
+---
+
 ## 11. mini MyBatis 和真实 MyBatis 的差距
 
 我们这次做的是学习版，所以故意只保留主线。

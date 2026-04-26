@@ -57,6 +57,27 @@ public class SimpleExecutor {
         }
     }
 
+    // 根据映射语句和参数对象执行更新语句。
+    public int update(Configuration configuration, MappedStatement mappedStatement, Object parameterObject) {
+        // 先把 #{...} 解析成 JDBC 可执行的 SQL。
+        BoundSql boundSql = buildBoundSql(mappedStatement.getSql());
+
+        // 创建数据库连接并执行更新。
+        try (
+                Connection connection = ConnectionFactory.createConnection(configuration);
+                PreparedStatement preparedStatement = connection.prepareStatement(boundSql.getJdbcSql())
+        ) {
+            // 先绑定参数。
+            setParameters(preparedStatement, boundSql, parameterObject);
+
+            // 执行更新，并返回影响行数。
+            return preparedStatement.executeUpdate();
+        } catch (Exception exception) {
+            // 如果执行失败，就抛异常。
+            throw new RuntimeException("执行更新 SQL 失败: " + mappedStatement.getStatementId(), exception);
+        }
+    }
+
     // 把原始 SQL 转成 BoundSql。
     private BoundSql buildBoundSql(String originalSql) {
         // 先做 token 解析。

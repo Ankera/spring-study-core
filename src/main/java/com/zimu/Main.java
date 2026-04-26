@@ -68,16 +68,36 @@ public class Main {
             // 从会话中拿到 mapper 代理对象。
             UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
 
+            // 先准备一个要插入的新用户对象。
+            User newUser = new User();
+            // 设置用户名。
+            newUser.setUsername("wangwu");
+            // 设置密码。
+            newUser.setPassword("pw123");
+            // 设置年龄。
+            newUser.setAge(22);
+
+            // 执行 insert，底层会把 #{username}、#{password}、#{age} 解析成 JDBC 参数。
+            int insertCount = userMapper.insertUser(newUser);
+
+            // 打印受影响行数。
+            System.out.println("6. mini MyBatis 插入用户影响行数: " + insertCount);
+
             // 调用接口方法，底层会自动转成 SQL 查询。
             User userById = userMapper.selectById(1L);
 
             // 再查一条用户名查询，看看另一个 SQL 是否生效。
             User userByUsername = userMapper.selectByUsername("lisi");
 
+            // 再按刚插入的用户名查回来，验证插入结果。
+            User insertedUser = userMapper.selectByUsername("wangwu");
+
             // 打印查询结果。
-            System.out.println("6. mini MyBatis 按 id 查询结果: " + userById);
+            System.out.println("7. mini MyBatis 按 id 查询结果: " + userById);
             // 打印第二个查询结果。
-            System.out.println("7. mini MyBatis 按用户名查询结果: " + userByUsername);
+            System.out.println("8. mini MyBatis 按用户名查询结果: " + userByUsername);
+            // 打印插入后再查出来的结果。
+            System.out.println("9. mini MyBatis 插入后再查结果: " + insertedUser);
         }
     }
 

@@ -48,6 +48,27 @@ public class DefaultSqlSession implements SqlSession {
         return simpleExecutor.query(configuration, mappedStatement, parameter);
     }
 
+    // 根据 statementId 执行一条 insert。
+    @Override
+    public int insert(String statementId, Object parameter) {
+        // 先根据 statementId 找到对应的映射语句。
+        MappedStatement mappedStatement = configuration.getMappedStatement(statementId);
+
+        // 如果没有配置这条语句，就直接报错。
+        if (mappedStatement == null) {
+            throw new IllegalArgumentException("找不到对应的 MappedStatement: " + statementId);
+        }
+
+        // 交给执行器真正执行更新语句。
+        return simpleExecutor.update(configuration, mappedStatement, parameter);
+    }
+
+    // 根据 statementId 获取映射语句。
+    @Override
+    public MappedStatement getMappedStatement(String statementId) {
+        return configuration.getMappedStatement(statementId);
+    }
+
     // 当前示例没有长期持有连接，所以这里先留空。
     @Override
     public void close() {

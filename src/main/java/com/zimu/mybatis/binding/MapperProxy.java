@@ -1,5 +1,9 @@
 package com.zimu.mybatis.binding;
 
+// 导入映射语句对象。
+import com.zimu.mybatis.mapping.MappedStatement;
+// 导入 SQL 类型枚举。
+import com.zimu.mybatis.mapping.SqlCommandType;
 // 导入会话接口。
 import com.zimu.mybatis.session.SqlSession;
 
@@ -41,7 +45,20 @@ public class MapperProxy<T> implements InvocationHandler {
         // 当前示例只演示单参数查询，所以有参数就取第一个，没有就传 null。
         Object parameter = args == null || args.length == 0 ? null : args[0];
 
-        // 调用 SqlSession 执行查询。
-        return sqlSession.selectOne(statementId, parameter);
+        // 先拿到这条语句的配置。
+        MappedStatement mappedStatement = sqlSession.getMappedStatement(statementId);
+
+        // 根据 SQL 类型分发到不同执行方法。
+        if (mappedStatement.getSqlCommandType() == SqlCommandType.SELECT) {
+            return sqlSession.selectOne(statementId, parameter);
+        }
+
+        // 这里演示 insert。
+        if (mappedStatement.getSqlCommandType() == SqlCommandType.INSERT) {
+            return sqlSession.insert(statementId, parameter);
+        }
+
+        // 当前教学版只支持 select 和 insert。
+        throw new IllegalStateException("暂不支持的 SQL 类型: " + mappedStatement.getSqlCommandType());
     }
 }

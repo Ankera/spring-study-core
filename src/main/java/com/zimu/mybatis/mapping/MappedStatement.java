@@ -18,6 +18,9 @@ public class MappedStatement {
     // 保存结果类型名。
     private String resultType;
 
+    // 保存当前 SQL 的类型。
+    private SqlCommandType sqlCommandType;
+
     // 返回 namespace。
     public String getNamespace() {
         return namespace;
@@ -66,6 +69,16 @@ public class MappedStatement {
     // 设置结果类型。
     public void setResultType(String resultType) {
         this.resultType = resultType;
+    }
+
+    // 返回 SQL 类型。
+    public SqlCommandType getSqlCommandType() {
+        return sqlCommandType;
+    }
+
+    // 设置 SQL 类型。
+    public void setSqlCommandType(SqlCommandType sqlCommandType) {
+        this.sqlCommandType = sqlCommandType;
     }
 
     // 返回完整的 statementId。
