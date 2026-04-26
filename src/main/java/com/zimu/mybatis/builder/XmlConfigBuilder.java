@@ -41,6 +41,10 @@ public class XmlConfigBuilder {
             parseEnvironment(rootElement, configuration);
 
             // 根据配置创建数据源。
+            //
+            // 为什么在解析配置文件时就创建 DataSource？
+            // 因为 SqlSessionFactory 构建完成后，后面的执行流程只需要从 Configuration 拿数据源。
+            // 这样执行器不会再关心 driver/url，也不会关心是否启用连接池。
             buildDataSource(configuration);
 
             // 再解析 mapper XML 列表。
@@ -79,8 +83,11 @@ public class XmlConfigBuilder {
                 case "url" -> configuration.setUrl(value);
                 case "username" -> configuration.setUsername(value);
                 case "password" -> configuration.setPassword(value);
+                // 是否开启连接池。
                 case "poolEnabled" -> configuration.setPoolEnabled(Boolean.parseBoolean(value));
+                // 最多允许同时借出去多少个连接。
                 case "poolMaximumActiveConnections" -> configuration.setPoolMaximumActiveConnections(Integer.parseInt(value));
+                // 最多保留多少个空闲连接等待复用。
                 case "poolMaximumIdleConnections" -> configuration.setPoolMaximumIdleConnections(Integer.parseInt(value));
                 default -> throw new IllegalArgumentException("不认识的数据库配置项: " + name);
             }
@@ -90,6 +97,9 @@ public class XmlConfigBuilder {
     // 根据配置创建数据源。
     private void buildDataSource(Configuration configuration) {
         // 非池化数据源负责真的创建物理连接。
+        //
+        // 即使最终启用连接池，也要先有一个能创建真实连接的对象。
+        // 连接池只是复用连接，不是凭空变出连接。
         UnpooledDataSource unpooledDataSource = new UnpooledDataSource(
                 configuration.getDriver(),
                 configuration.getUrl(),
@@ -98,6 +108,10 @@ public class XmlConfigBuilder {
         );
 
         // 如果启用连接池，就用池化数据源包装一层。
+        //
+        // 这就是装饰/包装的思路：
+        // 原本 UnpooledDataSource 只会新建连接；
+        // 外面包一层 PooledDataSource 后，就多了“缓存和复用”的能力。
         if (configuration.isPoolEnabled()) {
             configuration.setDataSource(new PooledDataSource(
                     unpooledDataSource,
@@ -108,6 +122,9 @@ public class XmlConfigBuilder {
         }
 
         // 否则每次都新建连接。
+        //
+        // 保留非池化模式，是为了对比学习：
+        // 同一套 Executor 代码，可以在池化/非池化之间切换。
         configuration.setDataSource(unpooledDataSource);
     }
 
