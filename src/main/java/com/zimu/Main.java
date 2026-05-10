@@ -33,11 +33,14 @@ public class Main {
         runSpringDemo();
 
         // 再演示我们自己写的 mini MyBatis。
-        runMyBatisDemo();
+//        runMyBatisDemo();
     }
 
     // 这个方法单独负责演示 mini Spring。
     private static void runSpringDemo() {
+
+        System.out.println("== start ==");
+
         // 创建我们自己的容器，并把配置类传进去。
         ApplicationContext applicationContext = new ApplicationContext(AppConfig.class);
 

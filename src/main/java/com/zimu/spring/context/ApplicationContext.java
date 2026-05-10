@@ -23,6 +23,8 @@ import com.zimu.spring.util.ClassScanner;
 
 // 导入输入流。
 import java.io.InputStream;
+// 导入注解类型。
+import java.lang.annotation.Annotation;
 // 导入反射构造器。
 import java.lang.reflect.Constructor;
 // 导入反射字段。
@@ -33,6 +35,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 // 导入修饰符工具类。
 import java.lang.reflect.Modifier;
+// 导入数组列表。
+import java.util.ArrayList;
 // 导入哈希映射。
 import java.util.HashMap;
 // 导入列表接口。
@@ -494,5 +498,47 @@ public class ApplicationContext {
 
         // 返回找到的 Bean。
         return bean;
+    }
+
+    // 按注解获取 Bean。
+    //
+    // mini MVC 的 HandlerMapping 会用它查找所有 @Controller Bean。
+    // 这样 HandlerMapping 不需要自己做包扫描，只需要从 IoC 容器里拿已经创建好的对象。
+    public Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType) {
+        // 创建返回结果。
+        Map<String, Object> result = new HashMap<>();
+
+        // 遍历容器中所有按名字保存的 Bean。
+        for (Map.Entry<String, Object> entry : beanByName.entrySet()) {
+            Object bean = entry.getValue();
+
+            // 如果 Bean 的类上标了目标注解，就放入结果。
+            if (bean.getClass().isAnnotationPresent(annotationType)) {
+                result.put(entry.getKey(), bean);
+            }
+        }
+
+        // 返回所有匹配的 Bean。
+        return result;
+    }
+
+    // 按父类型或接口获取 Bean。
+    //
+    // mini MVC 的 DispatcherServlet 会用它查找所有 HandlerInterceptor。
+    // 比如 LoginInterceptor 实现了 HandlerInterceptor 接口，就会被找出来。
+    public <T> List<T> getBeansAssignableTo(Class<T> type) {
+        // 创建返回结果。
+        List<T> result = new ArrayList<>();
+
+        // 遍历所有 Bean。
+        for (Object bean : beanByType.values()) {
+            // 如果目标类型可以接收这个 Bean，就加入结果。
+            if (type.isAssignableFrom(bean.getClass())) {
+                result.add(type.cast(bean));
+            }
+        }
+
+        // 返回所有匹配的 Bean。
+        return result;
     }
 }
