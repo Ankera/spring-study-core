@@ -539,3 +539,159 @@ mvn exec:java -Dexec.mainClass=com.zimu.demo.mybatis.support.ConnectionPoolDemo
 2. `mybatis-config.xml` 改成 MySQL 的 driver、url、username、password
 
 连接池这套核心逻辑仍然可以继续复用。
+
+---
+
+## 13. 新增 PageHelper + MySQL 分页学习源码
+
+这次又给 mini MyBatis 加了一个“教学版 PageHelper”。
+
+对应你想看的这句代码：
+
+```java
+PageHelper.startPage(dto.getPage(), dto.getPageSize());
+```
+
+### 13.1 这句代码的核心意思
+
+`startPage()` 本身不查数据库。
+
+它只是把分页参数保存到当前线程：
+
+```text
+page
+pageSize
+```
+
+然后等下一次 mapper 查询真正执行时，再把 SQL 改成 MySQL 分页 SQL：
+
+```sql
+select ...
+from ...
+order by ...
+limit ?, ?
+```
+
+其中：
+
+```text
+offset = (page - 1) * pageSize
+```
+
+### 13.2 新增的核心类
+
+新增了这些文件：
+
+- `src/main/java/com/zimu/mybatis/plugin/page/PageHelper.java`
+- `src/main/java/com/zimu/mybatis/plugin/page/Page.java`
+- `src/main/java/com/zimu/mybatis/plugin/page/MySqlPageInterceptor.java`
+- `src/main/java/com/zimu/demo/mybatis/support/PageHelperMiniDemo.java`
+- `pagehelper.md`
+
+也改了这些关键文件：
+
+- `src/main/java/com/zimu/mybatis/executor/SimpleExecutor.java`
+- `src/main/java/com/zimu/mybatis/mapping/BoundSql.java`
+- `src/main/java/com/zimu/mybatis/session/SqlSession.java`
+- `src/main/java/com/zimu/mybatis/session/DefaultSqlSession.java`
+- `src/main/java/com/zimu/mybatis/binding/MapperProxy.java`
+- `src/main/java/com/zimu/demo/mybatis/mapper/UserMapper.java`
+- `src/main/resources/com/zimu/demo/mybatis/mapper/UserMapper.xml`
+
+### 13.3 新增能力
+
+mini MyBatis 原来只支持：
+
+```java
+User selectById(Long id);
+```
+
+也就是单条查询。
+
+现在新增了列表查询：
+
+```java
+List<User> selectAll();
+```
+
+如果 mapper 方法返回 `List`，`MapperProxy` 会走：
+
+```java
+sqlSession.selectList(statementId, parameter);
+```
+
+然后由 `SimpleExecutor.queryList()` 映射多行结果。
+
+### 13.4 PageHelper 的执行链路
+
+这段代码：
+
+```java
+PageHelper.startPage(2, 2);
+List<User> users = userMapper.selectAll();
+```
+
+实际链路是：
+
+```text
+PageHelper.startPage(2, 2)
+        |
+        v
+ThreadLocal 保存 Page
+        |
+        v
+userMapper.selectAll()
+        |
+        v
+MapperProxy.invoke()
+        |
+        v
+SqlSession.selectList()
+        |
+        v
+SimpleExecutor.queryList()
+        |
+        v
+MySqlPageInterceptor 追加 limit ?, ?
+        |
+        v
+PreparedStatement 绑定 offset 和 pageSize
+        |
+        v
+数据库执行分页查询
+```
+
+### 13.5 运行结果
+
+测试已经跑过：
+
+```bash
+mvn test
+```
+
+核心输出：
+
+```text
+PageHelper 第 2 页，每页 2 条:
+[User{id=3, username='wangwu', ...}, User{id=4, username='zhaoliu', ...}]
+```
+
+这说明：
+
+```java
+PageHelper.startPage(2, 2);
+```
+
+已经把下一条查询改成了：
+
+```sql
+limit 2, 2
+```
+
+也就是：
+
+跳过前 2 条，取后面 2 条。
+
+更完整的说明在：
+
+- `pagehelper.md`

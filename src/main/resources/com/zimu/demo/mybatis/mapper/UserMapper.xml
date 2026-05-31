@@ -12,6 +12,12 @@
         where username = #{username}
     </select>
 
+    <select id="selectAll" resultType="com.zimu.demo.mybatis.entity.User">
+        select id, username, password, age
+        from t_user
+        order by id
+    </select>
+
     <insert id="insertUser" parameterType="com.zimu.demo.mybatis.entity.User">
         insert into t_user(username, password, age)
         values (#{username}, #{password}, #{age})

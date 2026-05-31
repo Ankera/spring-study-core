@@ -9,6 +9,9 @@ import com.zimu.mybatis.executor.SimpleExecutor;
 // 导入映射语句。
 import com.zimu.mybatis.mapping.MappedStatement;
 
+// 导入列表接口。
+import java.util.List;
+
 // 这个类是 mini MyBatis 里的核心门面对象。
 public class DefaultSqlSession implements SqlSession {
 
@@ -46,6 +49,21 @@ public class DefaultSqlSession implements SqlSession {
 
         // 交给执行器真正执行。
         return simpleExecutor.query(configuration, mappedStatement, parameter);
+    }
+
+    // 根据 statementId 执行列表查询。
+    @Override
+    public <T> List<T> selectList(String statementId, Object parameter) {
+        // 先根据 statementId 找到对应的映射语句。
+        MappedStatement mappedStatement = configuration.getMappedStatement(statementId);
+
+        // 如果没有配置这条语句，就直接报错。
+        if (mappedStatement == null) {
+            throw new IllegalArgumentException("找不到对应的 MappedStatement: " + statementId);
+        }
+
+        // 交给执行器真正执行列表查询。
+        return simpleExecutor.queryList(configuration, mappedStatement, parameter);
     }
 
     // 根据 statementId 执行一条 insert。

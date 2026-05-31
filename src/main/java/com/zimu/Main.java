@@ -14,6 +14,8 @@ import com.zimu.demo.controller.UserController;
 import com.zimu.demo.bean.SystemReporter;
 // 导入 mini MyBatis 的工厂构建器。
 import com.zimu.mybatis.config.Configuration;
+// 导入教学版 PageHelper。
+import com.zimu.mybatis.plugin.page.PageHelper;
 import com.zimu.mybatis.session.SqlSessionFactoryBuilder;
 // 导入 mini MyBatis 的会话接口。
 import com.zimu.mybatis.session.SqlSession;
@@ -23,6 +25,9 @@ import com.zimu.mybatis.session.SqlSessionFactory;
 import com.zimu.spring.context.ApplicationContext;
 // 导入 JUnit 的测试注解。
 import org.junit.jupiter.api.Test;
+
+// 导入列表接口。
+import java.util.List;
 
 // 这是程序启动入口。
 public class Main {
@@ -74,7 +79,7 @@ public class Main {
             // 先准备一个要插入的新用户对象。
             User newUser = new User();
             // 设置用户名。
-            newUser.setUsername("wangwu");
+            newUser.setUsername("tianba");
             // 设置密码。
             newUser.setPassword("pw123");
             // 设置年龄。
@@ -93,7 +98,13 @@ public class Main {
             User userByUsername = userMapper.selectByUsername("lisi");
 
             // 再按刚插入的用户名查回来，验证插入结果。
-            User insertedUser = userMapper.selectByUsername("wangwu");
+            User insertedUser = userMapper.selectByUsername("tianba");
+
+            // 先设置分页参数。
+            PageHelper.startPage(2, 2);
+
+            // 紧跟着的第一次列表查询会自动加上 MySQL limit。
+            List<User> pageUsers = userMapper.selectAll();
 
             // 打印查询结果。
             System.out.println("7. mini MyBatis 按 id 查询结果: " + userById);
@@ -101,6 +112,8 @@ public class Main {
             System.out.println("8. mini MyBatis 按用户名查询结果: " + userByUsername);
             // 打印插入后再查出来的结果。
             System.out.println("9. mini MyBatis 插入后再查结果: " + insertedUser);
+            // 打印分页查询结果。
+            System.out.println("10. PageHelper 第 2 页，每页 2 条: " + pageUsers);
         }
     }
 

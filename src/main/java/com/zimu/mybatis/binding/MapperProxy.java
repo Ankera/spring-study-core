@@ -11,6 +11,8 @@ import com.zimu.mybatis.session.SqlSession;
 import java.lang.reflect.InvocationHandler;
 // 导入方法对象。
 import java.lang.reflect.Method;
+// 导入列表接口。
+import java.util.List;
 
 // 这个类是动态代理真正干活的地方。
 public class MapperProxy<T> implements InvocationHandler {
@@ -50,6 +52,12 @@ public class MapperProxy<T> implements InvocationHandler {
 
         // 根据 SQL 类型分发到不同执行方法。
         if (mappedStatement.getSqlCommandType() == SqlCommandType.SELECT) {
+            // 如果接口方法返回 List，就执行列表查询。
+            if (List.class.isAssignableFrom(method.getReturnType())) {
+                return sqlSession.selectList(statementId, parameter);
+            }
+
+            // 否则仍然按单条查询处理。
             return sqlSession.selectOne(statementId, parameter);
         }
 

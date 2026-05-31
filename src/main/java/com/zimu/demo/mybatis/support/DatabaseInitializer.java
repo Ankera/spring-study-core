@@ -38,6 +38,15 @@ public class DatabaseInitializer {
 
             // 插入第二条测试数据。
             statement.execute("insert into t_user(username, password, age) values ('lisi', 'abcdef', 20)");
+
+            // 插入第三条测试数据。
+            statement.execute("insert into t_user(username, password, age) values ('wangwu', 'pw123', 22)");
+
+            // 插入第四条测试数据。
+            statement.execute("insert into t_user(username, password, age) values ('zhaoliu', 'hello', 24)");
+
+            // 插入第五条测试数据。
+            statement.execute("insert into t_user(username, password, age) values ('sunqi', 'world', 26)");
         } catch (Exception exception) {
             // 如果初始化失败，就抛异常。
             throw new RuntimeException("初始化测试数据库失败", exception);
